@@ -19,4 +19,4 @@ venv
 .eggs
 
 # AltStore-Proxy
-altstore_proxy/cache
+cache

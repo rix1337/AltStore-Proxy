@@ -4,7 +4,6 @@
 [![Github Sponsorship](https://img.shields.io/badge/support-me-red.svg)](https://github.com/users/rix1337/sponsorship)
 
 A simple proxy for slow AltStore servers.
-The official docker image is available at [Docker Hub](https://hub.docker.com/r/rix1337/docker-altstore_proxy).
 
 # Setup
 
