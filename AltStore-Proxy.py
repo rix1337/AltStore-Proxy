@@ -1,4 +1,4 @@
-from altstore_proxy import web
+from altstore_proxy import altstore_proxy
 
 if __name__ == '__main__':
-    web.main()
+    altstore_proxy.main()

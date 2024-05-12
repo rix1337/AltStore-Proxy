@@ -17,3 +17,6 @@ venv
 # PyCharm
 .idea
 .eggs
+
+# AltStore-Proxy
+altstore_proxy/cache
