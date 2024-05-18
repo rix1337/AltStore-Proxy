@@ -35,7 +35,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'altstore_proxy = altstore_proxy.web:main',
+            'altstore_proxy = altstore_proxy.proxy:main',
         ],
     },
 )

@@ -1,4 +1,4 @@
-from altstore_proxy import altstore_proxy
+from altstore_proxy import proxy
 
 if __name__ == '__main__':
-    altstore_proxy.main()
+    proxy.main()
