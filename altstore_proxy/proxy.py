@@ -171,7 +171,50 @@ def main():
 
         @app.get("/")
         def status():
-            return "AltStore-Proxy is running! Add this URL + /apps.json to your AltStore."
+            repos_html = ''.join(
+                f'<li><a href="{repo}">{repo}</a></li>' for repo in shared_state.values["repos_to_cache"])
+            return f'''
+            <html>
+            <head>
+                <title>AltStore-Proxy</title>
+                <style>
+                    body {{
+                        background: linear-gradient(to right, #f9f9f9, #e0e0e0);
+                        font-family: Arial, sans-serif;
+                        padding: 20px;
+                        text-align: center;
+                    }}
+                    button {{
+                        font-size: 20px;
+                        padding: 10px 20px;
+                        margin-top: 20px;
+                        background-color: #4CAF50; /* Green */
+                        border: none;
+                        color: white;
+                        text-align: center;
+                        text-decoration: none;
+                        display: inline-block;
+                        font-size: 16px;
+                        transition-duration: 0.4s;
+                        cursor: pointer;
+                    }}
+                    button:hover {{
+                        background-color: #45a049;
+                    }}
+                </style>
+            </head>
+            <body>
+                <h1>AltStore-Proxy</h1>
+                <a href="/apps.json">View apps.json</a><br>
+                <a href="altstore://source?url={shared_state.values["baseurl"]}">
+                    <button>Add this source to AltStore to receive app updates</button>
+                </a>
+                <h2>Source Repositories</h2>
+                <ul>
+                    {repos_html}
+                </ul>
+            </body>
+            </html>'''
 
         @app.get('/cache/<filename:path>')
         def serve_file(filename):
@@ -192,7 +235,8 @@ def main():
             time.sleep(1)
 
         print(
-            "[AltStore-Proxy] AltStores proxied at http://127.0.0.1:" + str(shared_state.values["port"]) + "/apps.json")
+            "[AltStore-Proxy] Add this source to AltStore by opening " + shared_state.values[
+                "baseurl"] + " on your mobile device.")
         try:
             Server(app, listen='0.0.0.0', port=shared_state.values["port"]).serve_forever()
         except KeyboardInterrupt:
