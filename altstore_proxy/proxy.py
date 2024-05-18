@@ -205,8 +205,8 @@ def main():
             </head>
             <body>
                 <h1>AltStore-Proxy</h1>
-                <a href="/apps.json">View apps.json</a><br>
-                <a href="altstore://source?url={shared_state.values["baseurl"]}">
+                <a href="/apps.json">Source for use in AltStore</a><br>
+                <a href="altstore://source?url={shared_state.values["baseurl"]}/apps.json">
                     <button>Add this source to AltStore to receive app updates</button>
                 </a>
                 <h2>Source Repositories</h2>

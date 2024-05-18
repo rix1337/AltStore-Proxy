@@ -1,9 +1,6 @@
 name: Build Image
 
 on:
-  push:
-    paths:
-       - 'docker/**'
   workflow_dispatch:
     inputs:
       version:
