@@ -87,6 +87,8 @@ def merge_jsons(shared_state_dict, shared_state_lock):
                     print("Found " + app['name'] + ", v." + app['version'])
                     download_url = app['downloadURL']
                     filename = download_and_cache_ipa(download_url)
+                    if filename.startswith("/"):
+                        filename = filename[1:]
                     app['downloadURL'] = shared_state.values["baseurl"] + '/' + filename
                 merged_json['apps'].extend(data['apps'])
 
