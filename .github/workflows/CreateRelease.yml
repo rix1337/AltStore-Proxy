@@ -2,6 +2,8 @@ name: Release Artifacts
 
 on:
   push:
+    paths-ignore:
+      - 'docker/**'
     branches:
       - main
 

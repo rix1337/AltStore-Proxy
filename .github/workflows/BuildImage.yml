@@ -1,7 +1,9 @@
 name: Build Image
 
-on: 
+on:
   push:
+    paths:
+      - 'docker/**'
   workflow_dispatch:
 
 env:

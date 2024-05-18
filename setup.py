@@ -4,6 +4,8 @@
 
 import setuptools
 
+from altstore_proxy.version import get_version
+
 try:
     with open('README.md', encoding='utf-8') as f:
         long_description = f.read()
@@ -17,7 +19,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="altstore_proxy",
-    version="1.0.0",
+    version=get_version(),
     author="rix1337",
     author_email="",
     description="A simple proxy for slow AltStore servers",
