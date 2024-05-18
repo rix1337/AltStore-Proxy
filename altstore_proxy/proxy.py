@@ -77,7 +77,12 @@ def merge_jsons(shared_state_dict, shared_state_lock):
     try:
         while True:
             merged_json = {
-                "apps": []
+                "name": "AltStore-Proxy",
+                "subtitle": "A simple proxy for slow AltStore servers.",
+                "iconURL": "https://altstore.io/images/AltStore_AppIcon.png",
+                "website": "https://github.com/rix1337/AltStore-Proxy",
+                "apps": [],
+                "news": []
             }
 
             for repo in shared_state.values["repos_to_cache"]:
