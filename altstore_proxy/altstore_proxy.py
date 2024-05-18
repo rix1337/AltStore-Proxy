@@ -16,7 +16,7 @@ from tqdm import tqdm
 
 from altstore_proxy.providers import shared_state
 
-version = "0.0.1"
+version = "1.0.0"
 
 
 class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
@@ -88,9 +88,10 @@ def merge_jsons(shared_state_dict, shared_state_lock):
                     print("Found " + app['name'] + ", v." + app['version'])
                     download_url = app['downloadURL']
                     filename = download_and_cache_ipa(download_url)
-                    app['downloadURL'] = 'http://127.0.0.1:' + str(shared_state.values["port"]) + '/' + filename
+                    app['downloadURL'] = shared_state.values["baseurl"] + '/' + filename
                 merged_json['apps'].extend(data['apps'])
 
+            shared_state.update("ready", True)
             shared_state.update("merged_json", merged_json)
 
             time.sleep(3600)
@@ -104,24 +105,61 @@ def main():
         shared_state_lock = manager.Lock()
         shared_state.set_state(shared_state_dict, shared_state_lock)
 
+        print("[AltStore-Proxy] Version " + str(version))
+        shared_state.update("ready", False)
+
         parser = argparse.ArgumentParser()
-        # ToDo add argument for custom cache directory
-        # ToDo add argument for custom repos
-        # ToDo add argument for custom base url (in case of proxy / nonlocal usage)
         parser.add_argument("--port", help="Desired Port, defaults to 8080")
+        parser.add_argument("--baseurl", help="Base URL for the AltStore-Proxy (for reverse proxy usage)")
+        parser.add_argument("--cache", help="Desired Cache Directory, defaults to ./cache")
+        parser.add_argument("--repos", help="Desired apps.json Repositories to Cache - comma separated")
         arguments = parser.parse_args()
 
         if arguments.port:
-            shared_state.update("port", arguments.port)
+            try:
+                shared_state.update("port", int(arguments.port))
+            except ValueError:
+                print("[AltStore-Proxy] Port must be an integer")
+                sys.exit(1)
         else:
             shared_state.update("port", 8080)
 
-        shared_state.update("repos_to_cache", [
-            "https://raw.githubusercontent.com/arichornlover/arichornlover.github.io/main/apps.json",
-            "https://raw.githubusercontent.com/lo-cafe/winston-altstore/main/apps.json"
-        ])
+        if arguments.cache:
+            shared_state.update("cache", arguments.cache)
+        else:
+            shared_state.update("cache", "./cache")
+        if arguments.baseurl:
+            shared_state.update("baseurl", arguments.baseurl)
+        else:
+            shared_state.update("baseurl", "http://127.0.0.1:" + str(shared_state.values["port"]))
 
-        print("[AltStore-Proxy] Version " + str(version))
+        if shared_state.values["baseurl"][-1] == "/":
+            shared_state.update("baseurl", shared_state.values["baseurl"][:-1])
+        if not shared_state.values["baseurl"].startswith("http"):
+            print("[AltStore-Proxy] Base URL must start with http:// or https://")
+            sys.exit(1)
+        if not shared_state.values["baseurl"]:
+            print("[AltStore-Proxy] Base URL must not be empty")
+            sys.exit(1)
+        print("[AltStore-Proxy] Base URL: " + shared_state.values["baseurl"])
+
+        try:
+            os.makedirs(shared_state.values["cache"], exist_ok=True)
+            print("[AltStore-Proxy] Cache directory: " + shared_state.values["cache"])
+        except Exception as e:
+            print("[AltStore-Proxy] Error creating cache directory: " + str(e))
+            sys.exit(1)
+
+        if arguments.repos:
+            shared_state.update("repos_to_cache", arguments.repos.split(","))
+            print("[AltStore-Proxy] Using custom repositories: " + str(shared_state.values["repos_to_cache"]))
+        else:
+            shared_state.update("repos_to_cache", [
+                "https://raw.githubusercontent.com/arichornlover/arichornlover.github.io/main/apps.json",
+                "https://raw.githubusercontent.com/lo-cafe/winston-altstore/main/apps.json"
+            ])
+            print("[AltStore-Proxy] No repositories provided, using default repositories: " + str(
+                shared_state.values["repos_to_cache"]))
 
         app = Bottle()
 
@@ -131,7 +169,7 @@ def main():
 
         @app.get('/cache/<filename:path>')
         def serve_file(filename):
-            return static_file(filename, root='cache', download=filename)
+            return static_file(filename, root=shared_state.values["cache"], download=filename)
 
         @app.get("/apps.json")
         def status():
@@ -143,6 +181,9 @@ def main():
 
         hourly_update = multiprocessing.Process(target=merge_jsons, args=(shared_state_dict, shared_state_lock,))
         hourly_update.start()
+
+        while not shared_state.values["ready"]:
+            time.sleep(1)
 
         print(
             "[AltStore-Proxy] AltStores proxied at http://127.0.0.1:" + str(shared_state.values["port"]) + "/apps.json")

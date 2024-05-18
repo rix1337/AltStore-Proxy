@@ -11,5 +11,11 @@ A simple proxy for slow AltStore servers.
 
 # Run
 
-` altstore_proxy --port=8080` 
+```
+altstore_proxy
+  --port=8080
+  --baseurl=https://example.com/
+  --cache=/tmp/altstore_cache
+  --repos=https://fake.tld/apps.json,https://foo.bar/altstore.json
+```
 

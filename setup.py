@@ -17,7 +17,7 @@ with open('requirements.txt') as f:
 
 setuptools.setup(
     name="altstore_proxy",
-    version="0.0.1",
+    version="1.0.0",
     author="rix1337",
     author_email="",
     description="A simple proxy for slow AltStore servers",
