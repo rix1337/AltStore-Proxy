@@ -15,8 +15,7 @@ from bottle import Bottle, abort, static_file
 from tqdm import tqdm
 
 from altstore_proxy.providers import shared_state
-
-version = "1.0.0"
+from altstore_proxy.version import get_version
 
 
 class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
@@ -105,7 +104,7 @@ def main():
         shared_state_lock = manager.Lock()
         shared_state.set_state(shared_state_dict, shared_state_lock)
 
-        print("[AltStore-Proxy] Version " + str(version))
+        print("[AltStore-Proxy] Version " + get_version() + " by rix1337")
         shared_state.update("ready", False)
 
         parser = argparse.ArgumentParser()

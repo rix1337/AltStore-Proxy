@@ -1,0 +1,5 @@
+#!/usr/bin/with-contenv bash
+
+pip install altstore-proxy -U -q
+
+chown -R abc:abc /config/

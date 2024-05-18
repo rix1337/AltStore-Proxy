@@ -1,6 +1,6 @@
 #  AltStore-Proxy
 
-[![PyPI version](https://badge.fury.io/py/altstore_proxy.svg)](https://badge.fury.io/py/altstore_proxy)
+[![PyPI version](https://badge.fury.io/py/altstore-proxy.svg)](https://badge.fury.io/py/altstore-proxy)
 [![Github Sponsorship](https://img.shields.io/badge/support-me-red.svg)](https://github.com/users/rix1337/sponsorship)
 
 A simple proxy for slow AltStore servers.

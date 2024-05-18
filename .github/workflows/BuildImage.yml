@@ -1,0 +1,22 @@
+name: Build Image
+
+on: 
+  push:
+  workflow_dispatch:
+
+env:
+  ENDPOINT: "rix1337/docker-altstore-proxy"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: whoan/docker-build-with-cache-action@v6
+        with:
+          username: "${{ secrets.DOCKERUSER }}"
+          password: "${{ secrets.DOCKERPASS }}"
+          image_name: "${{ env.ENDPOINT }}"
+          context: "./docker"
+          image_tag: latest
+          stages_image_name: "rix1337/cache-altstore-proxy-latest"

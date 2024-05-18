@@ -1,0 +1,3 @@
+#!/usr/bin/with-contenv bash
+
+exec altstore_proxy --port=8080 --cache=/cache --baseurl=$BASEURL --repos=$REPOS

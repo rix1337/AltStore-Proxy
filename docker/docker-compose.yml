@@ -1,0 +1,12 @@
+version: '3.3'
+services:
+    docker-altstore-proxy:
+        container_name: AltStore-Proxy
+        ports:
+            - 'port:8080'
+        volumes:
+            - '/path/to/cache/:/cache:rw'
+        environment:
+            - baseurl=https://example.com
+            - repos=OPTIONAL
+        image: rix1337/docker-altstore-proxy
