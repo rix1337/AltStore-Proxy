@@ -57,5 +57,6 @@ jobs:
           password: "${{ secrets.DOCKERPASS }}"
           image_name: "${{ env.ENDPOINT }}"
           image_tag: latest,${{needs.version-check.outputs.output}}
+          context: "./docker"
           stages_image_name: "rix1337/cache-altstore-proxy-latest"
           build_extra_args: "--build-arg=VS=${{needs.version-check.outputs.output}}"
