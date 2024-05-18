@@ -47,7 +47,7 @@ def download_and_cache_ipa(url):
     if "tinyurl.com" in url:
         url = response.url
 
-    filename = os.path.join('cache', os.path.basename(url))
+    filename = os.path.join(shared_state.values["cache"], os.path.basename(url))
 
     print(f"Downloading {url} to {filename}")
     os.makedirs(os.path.dirname(filename), exist_ok=True)
