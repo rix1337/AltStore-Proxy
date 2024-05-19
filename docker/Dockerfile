@@ -15,8 +15,8 @@ RUN echo "VS: ${VS}"
 RUN pip3 install --upgrade pip \
   && pip3 install wheel
 
-# Install specific package version and clean up unneeded packages
-RUN if [[ ${VS} == "false" ]] ; then echo "Grabbing latest altstore-proxy version from pypi.org" && VERSION=$(curl -Ls https://pypi.org/pypi/altstore-proxy/json | jq -r .info.version) ; else echo "Using version from workflow_dispatch input" && VERSION=$VS ; fi  && \
+# Install specified package version and clean up unneeded packages
+RUN if [[ ${VS} == "false" ]] ; then echo "Grabbing latest version from pypi.org" && VERSION=$(curl -Ls https://pypi.org/pypi/${PACKAGE_NAME}/json | jq -r .info.version) ; else echo "Using version from workflow_dispatch input" && VERSION=$VS ; fi  && \
   echo $VERSION && \
   pip3 install ${PACKAGE_NAME}=="$VERSION" --no-cache-dir && \
     apk del build-base jq

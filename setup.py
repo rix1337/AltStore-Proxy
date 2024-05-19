@@ -18,14 +18,14 @@ with open('requirements.txt') as f:
     required = f.read().splitlines()
 
 setuptools.setup(
-    name="altstore_proxy",
+    name="altstore_proxy",  # case-sensitive replace this string, and this string with a dash in entire repo
     version=get_version(),
     author="rix1337",
     author_email="",
-    description="A simple proxy for slow AltStore servers",
+    description="A simple proxy for slow AltStore servers",  # case-sensitive replace here and in README.md
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/rix1337/AltStore-Proxy",
+    url="https://github.com/rix1337/AltStore-Proxy",  # case-sensitive replace the repo name in entire repo
     packages=setuptools.find_packages(),
     include_package_data=True,
     install_requires=required,
