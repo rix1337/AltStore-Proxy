@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # AltStore-Proxy
-# Projekt by https://github.com/rix1337
+# Project by https://github.com/rix1337
 
 import argparse
 import multiprocessing
@@ -14,8 +14,7 @@ import requests
 from bottle import Bottle, abort, static_file
 from tqdm import tqdm
 
-from altstore_proxy.providers import shared_state
-from altstore_proxy.version import get_version
+from altstore_proxy.providers import shared_state, version
 
 
 class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
@@ -48,8 +47,6 @@ def download_and_cache_ipa(url):
         url = response.url
 
     filename = os.path.join(shared_state.values["cache"], os.path.basename(url))
-
-    print(f"Downloading {url} to {filename}")
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
     # Check if file already exists and compare sizes
@@ -59,6 +56,7 @@ def download_and_cache_ipa(url):
             print(f"File {filename} already exists with the same size. Skipping download.")
             return filename
 
+    print(f"Downloading {url} to {filename}")
     progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
     with open(filename, 'wb') as f:
         for data in response.iter_content(chunk_size=1024):
@@ -71,11 +69,13 @@ def download_and_cache_ipa(url):
     return filename
 
 
-def merge_jsons(shared_state_dict, shared_state_lock):
+def update_json_proxy(shared_state_dict, shared_state_lock):
     shared_state.set_state(shared_state_dict, shared_state_lock)
 
     try:
         while True:
+            print("[AltStore-Proxy] Updating cache...")
+
             merged_json = {
                 "name": "AltStore-Proxy",
                 "subtitle": "A simple proxy for slow AltStore servers.",
@@ -111,7 +111,7 @@ def main():
         shared_state_lock = manager.Lock()
         shared_state.set_state(shared_state_dict, shared_state_lock)
 
-        print("[AltStore-Proxy] Version " + get_version() + " by rix1337")
+        print("[AltStore-Proxy] Version " + version.get_version() + " by rix1337")
         shared_state.update("ready", False)
 
         parser = argparse.ArgumentParser()
@@ -134,6 +134,7 @@ def main():
             shared_state.update("cache", arguments.cache)
         else:
             shared_state.update("cache", "./cache")
+
         if arguments.baseurl:
             shared_state.update("baseurl", arguments.baseurl)
         else:
@@ -228,7 +229,7 @@ def main():
                 print("[AntiGateHandler] status - Error: " + str(e))
             return abort(503, "Cache not initialized. Please try again later.")
 
-        hourly_update = multiprocessing.Process(target=merge_jsons, args=(shared_state_dict, shared_state_lock,))
+        hourly_update = multiprocessing.Process(target=update_json_proxy, args=(shared_state_dict, shared_state_lock,))
         hourly_update.start()
 
         while not shared_state.values["ready"]:

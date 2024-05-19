@@ -4,7 +4,7 @@
 
 import setuptools
 
-from altstore_proxy.version import get_version
+from altstore_proxy.providers.version import get_version
 
 try:
     with open('README.md', encoding='utf-8') as f:
@@ -25,7 +25,7 @@ setuptools.setup(
     description="A simple proxy for slow AltStore servers",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/rix1337/docker-altstore-proxy",
+    url="https://github.com/rix1337/AltStore-Proxy",
     packages=setuptools.find_packages(),
     include_package_data=True,
     install_requires=required,
@@ -37,7 +37,7 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'altstore_proxy = altstore_proxy.proxy:main',
+            'altstore_proxy = altstore_proxy.run:main',
         ],
     },
 )

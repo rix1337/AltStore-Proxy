@@ -29,7 +29,7 @@ jobs:
         run: |
           python setup.py sdist bdist_wheel
       - name: Get Version
-        run: echo "version=$(python altstore_proxy/version.py)" >>$GITHUB_OUTPUT
+        run: echo "version=$(python altstore_proxy/providers/version.py)" >>$GITHUB_OUTPUT
         id: version
       - name: Create Release
         uses: ncipollo/release-action@v1

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 # AltStore-Proxy
-# Projekt by https://github.com/rix1337
+# Project by https://github.com/rix1337
 
 
 def get_version():
-    return "1.1.2"
+    return "1.2.0"
 
 
 if __name__ == '__main__':

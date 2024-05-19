@@ -1,8 +1,11 @@
 FROM ghcr.io/linuxserver/baseimage-alpine:3.18
 MAINTAINER rix1337
 
+# Define package name
+ARG PACKAGE_NAME=altstore-proxy
+
 # build tools
-RUN apk add --no-cache build-base python3-dev py3-pip
+RUN apk add --no-cache build-base jq python3-dev py3-pip
 
 # Optionally set desired version for the build
 ARG VS="false"
@@ -12,10 +15,10 @@ RUN echo "VS: ${VS}"
 RUN pip3 install --upgrade pip \
   && pip3 install wheel
 
-# Install specific version of FeedCrawler and clean up unneeded packages
+# Install specific package version and clean up unneeded packages
 RUN if [[ ${VS} == "false" ]] ; then echo "Grabbing latest altstore-proxy version from pypi.org" && VERSION=$(curl -Ls https://pypi.org/pypi/altstore-proxy/json | jq -r .info.version) ; else echo "Using version from workflow_dispatch input" && VERSION=$VS ; fi  && \
   echo $VERSION && \
-  pip3 install altstore-proxy=="$VERSION" --no-cache-dir && \
+  pip3 install ${PACKAGE_NAME}=="$VERSION" --no-cache-dir && \
     apk del build-base jq
   
 # add local files

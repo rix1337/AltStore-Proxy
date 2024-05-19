@@ -14,7 +14,7 @@ A simple proxy for slow AltStore servers.
 ```
 altstore_proxy
   --port=8080
-  --baseurl=https://example.com/
+  --baseurl=https://example.com
   --cache=/tmp/altstore_cache
   --repos=https://fake.tld/apps.json,https://foo.bar/altstore.json
 ```
@@ -25,10 +25,7 @@ docker run -d \
   --name="AltStore-Proxy" \
   -p port:8080 \
   -v /path/to/cache/:/cache:rw \
-  rix1337/docker-altstore-proxy
+  -e 'BASEURL'='https://example.com'
+  -e 'REPOS'='https://fake.tld/apps.json,https://foo.bar/altstore.json'
+  rix1337/docker-altstore-proxy:latest
   ```
-## Optional Environment Variables
- - `-e BASEURL` Base URL for the AltStore-Proxy (for reverse proxy usage)
- - `-e REPOS` Desired apps.json Repositories to Cache - comma separated
-
-
