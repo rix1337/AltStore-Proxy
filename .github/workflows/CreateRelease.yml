@@ -3,6 +3,7 @@ name: Release Artifacts
 on:
   push:
     paths-ignore:
+      - '.github/**'
       - 'docker/**'
     branches:
       - main
