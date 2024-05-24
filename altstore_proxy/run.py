@@ -48,9 +48,6 @@ def download_and_cache_ipa(url):
 
     filename = os.path.join(shared_state.values["cache"], os.path.basename(url))
 
-    if filename.startswith("/"):
-        filename = filename[1:]
-
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
     # Check if file already exists and compare sizes
