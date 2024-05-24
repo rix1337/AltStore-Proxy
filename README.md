@@ -1,9 +1,14 @@
-#  AltStore-Proxy
+# AltStore-Proxy
 
 [![PyPI version](https://badge.fury.io/py/altstore-proxy.svg)](https://badge.fury.io/py/altstore-proxy)
 [![Github Sponsorship](https://img.shields.io/badge/support-me-red.svg)](https://github.com/users/rix1337/sponsorship)
 
 A simple proxy for slow AltStore servers
+
+# Features
+
+- Meant for use as custom Repo with AltStore Beta
+- Useful for manual sideloading / automatic update notifications with AltStore
 
 # Setup
 
@@ -17,9 +22,11 @@ altstore_proxy
   --baseurl=https://example.com
   --cache=/tmp/altstore_cache
   --repos=https://fake.tld/apps.json,https://foo.bar/altstore.json
+  --discord_webhook=https://discord.com/api/webhooks/foo/bar
 ```
 
 # Docker
+
 ```
 docker run -d \
   --name="AltStore-Proxy" \
@@ -27,5 +34,6 @@ docker run -d \
   -v /path/to/cache/:/cache:rw \
   -e 'BASEURL'='https://example.com'
   -e 'REPOS'='https://fake.tld/apps.json,https://foo.bar/altstore.json'
+  -e 'DISCORD_WEBHOOK'='https://discord.com/api/webhooks/foo/bar'
   rix1337/docker-altstore-proxy:latest
   ```

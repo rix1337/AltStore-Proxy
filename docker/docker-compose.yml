@@ -7,6 +7,7 @@ services:
         volumes:
             - '/path/to/cache/:/cache:rw'
         environment:
-            - 'baseurl=https://example.com'
-            - 'repos=https://fake.tld/apps.json,https://foo.bar/altstore.json'
+            - 'BASEURL=https://example.com'
+            - 'REPOS=https://fake.tld/apps.json,https://foo.bar/altstore.json'
+            - 'DISCORD_WEBHOOK=https://discord.com/api/webhooks/foo/bar'
         image: 'rix1337/docker-altstore-proxy:latest'

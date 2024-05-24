@@ -14,7 +14,7 @@ import requests
 from bottle import Bottle, abort, static_file
 from tqdm import tqdm
 
-from altstore_proxy.providers import shared_state, version
+from altstore_proxy.providers import shared_state, version, notifications
 
 
 class ThreadingWSGIServer(ThreadingMixIn, WSGIServer):
@@ -47,6 +47,10 @@ def download_and_cache_ipa(url):
         url = response.url
 
     filename = os.path.join(shared_state.values["cache"], os.path.basename(url))
+
+    if filename.startswith("/"):
+        filename = filename[1:]
+
     os.makedirs(os.path.dirname(filename), exist_ok=True)
 
     # Check if file already exists and compare sizes
@@ -54,7 +58,7 @@ def download_and_cache_ipa(url):
         existing_file_size = os.path.getsize(filename)
         if existing_file_size == total_size_in_bytes:
             print(f"File {filename} already exists with the same size. Skipping download.")
-            return filename
+            return filename, True
 
     print(f"Downloading {url} to {filename}")
     progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
@@ -66,7 +70,7 @@ def download_and_cache_ipa(url):
     if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
         print("ERROR, something went wrong")
 
-    return filename
+    return filename, False
 
 
 def update_json_proxy(shared_state_dict, shared_state_lock):
@@ -90,16 +94,18 @@ def update_json_proxy(shared_state_dict, shared_state_lock):
                 data = response.json()
                 for app in data['apps']:
                     print("Found " + app['name'] + ", v." + app['version'])
-                    download_url = app['downloadURL']
-                    filename = download_and_cache_ipa(download_url)
-                    if filename.startswith("/"):
-                        filename = filename[1:]
-                    app['downloadURL'] = shared_state.values["baseurl"] + '/' + filename
+                    app['filename'], skipped = download_and_cache_ipa(app['downloadURL'])
+                    app['downloadURL'] = shared_state.values["baseurl"] + '/' + app['filename']
+
+                    if not skipped:
+                        if shared_state.values['discord_webhook']:
+                            notifications.discord_webhook(shared_state, app)
+
                 merged_json['apps'].extend(data['apps'])
 
-            shared_state.update("ready", True)
             shared_state.update("merged_json", merged_json)
 
+            print("[AltStore-Proxy] Cache updated. Next update in 1 hour.")
             time.sleep(3600)
     except KeyboardInterrupt:
         sys.exit(0)
@@ -119,6 +125,7 @@ def main():
         parser.add_argument("--baseurl", help="Base URL for the AltStore-Proxy (for reverse proxy usage)")
         parser.add_argument("--cache", help="Desired Cache Directory, defaults to ./cache")
         parser.add_argument("--repos", help="Desired apps.json Repositories to Cache - comma separated")
+        parser.add_argument("--discord_webhook", help="Discord Webhook URL for notifications")
         arguments = parser.parse_args()
 
         if arguments.port:
@@ -168,58 +175,75 @@ def main():
             print("[AltStore-Proxy] No repositories provided, using default repositories: " + str(
                 shared_state.values["repos_to_cache"]))
 
+        if arguments.discord_webhook:
+            shared_state.update("discord_webhook", arguments.discord_webhook)
+            print("[AltStore-Proxy] Using Discord Webhook for update notifications")
+        else:
+            shared_state.update("discord_webhook", "")
+            print("[AltStore-Proxy] No update notifications set up.")
+
         app = Bottle()
 
         @app.get("/")
         def status():
-            repos_html = ''.join(
-                f'<li><a href="{repo}">{repo}</a></li>' for repo in shared_state.values["repos_to_cache"])
-            return f'''
-            <html>
-            <head>
-                <title>AltStore-Proxy</title>
-                <style>
-                    body {{
-                        background: linear-gradient(to right, #f9f9f9, #e0e0e0);
-                        font-family: Arial, sans-serif;
-                        padding: 20px;
-                        text-align: center;
-                    }}
-                    button {{
-                        font-size: 20px;
-                        padding: 10px 20px;
-                        margin-top: 20px;
-                        background-color: #4CAF50; /* Green */
-                        border: none;
-                        color: white;
-                        text-align: center;
-                        text-decoration: none;
-                        display: inline-block;
-                        font-size: 16px;
-                        transition-duration: 0.4s;
-                        cursor: pointer;
-                    }}
-                    button:hover {{
-                        background-color: #45a049;
-                    }}
-                </style>
-            </head>
-            <body>
-                <h1>AltStore-Proxy</h1>
-                <a href="/apps.json">Source for use in AltStore</a><br>
-                <a href="altstore://source?url={shared_state.values["baseurl"]}/apps.json">
-                    <button>Add this source to AltStore to receive app updates</button>
-                </a>
-                <h2>Source Repositories</h2>
-                <ul>
-                    {repos_html}
-                </ul>
-            </body>
-            </html>'''
+            try:
+                app_links = ""
+                for app in shared_state.values["merged_json"]['apps']:
+                    app_links += f'<a href="{app["downloadURL"]}" class="button grey">{app["name"]}</a><br>'
+
+                return f'''
+                <html>
+                <head>
+                    <title>AltStore-Proxy</title>
+                    <style>
+                        body {{
+                            background: linear-gradient(to right, #f9f9f9, #e0e0e0);
+                            font-family: Arial, sans-serif;
+                            padding: 20px;
+                            text-align: center;
+                        }}
+                        .button {{
+                            display: inline-block;
+                            font-size: 16px;
+                            margin: 10px;
+                            padding: 10px 20px;
+                            color: white;
+                            text-decoration: none;
+                            transition-duration: 0.4s;
+                            cursor: pointer;
+                            border-radius: 5px;
+                        }}
+                        .button.grey {{
+                            background-color: #808080; /* Grey */
+                        }}
+                        .button.grey:hover {{
+                            background-color: #696969; /* Darker Grey */
+                        }}
+                        .button.green {{
+                            background-color: #4CAF50; /* Green */
+                        }}
+                        .button.green:hover {{
+                            background-color: #45a049;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    <h1>AltStore-Proxy</h1>
+                    {app_links}
+                    <a href="altstore://source?url={shared_state.values["baseurl"]}/apps.json">
+                        <button class="button green">Add this source to AltStore to receive app updates</button>
+                    </a><br><br>
+                    <a href="/apps.json">Source for use in AltStore</a>
+                </body>
+                </html>'''
+            except Exception as e:
+                print("[AntiGateHandler] status - Error: " + str(e))
+            return abort(503, "Cache not initialized. Please try again later.")
 
         @app.get('/cache/<filename:path>')
         def serve_file(filename):
-            return static_file(filename, root=shared_state.values["cache"], download=filename)
+            return static_file(filename, root=shared_state.values["cache"], download=filename,
+                               mimetype='application/octet-stream')
 
         @app.get("/apps.json")
         def status():
@@ -231,9 +255,6 @@ def main():
 
         hourly_update = multiprocessing.Process(target=update_json_proxy, args=(shared_state_dict, shared_state_lock,))
         hourly_update.start()
-
-        while not shared_state.values["ready"]:
-            time.sleep(1)
 
         print(
             "[AltStore-Proxy] Add this source to AltStore by opening " + shared_state.values[
