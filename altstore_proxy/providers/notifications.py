@@ -3,7 +3,6 @@
 # Project by https://github.com/rix1337
 
 import json
-import os
 
 import requests
 
@@ -51,7 +50,7 @@ def discord_webhook(shared_state, app):
                     'value': readable_size(app['size']),
                 }, {
                     'name': "Download",
-                    'value': f'[{os.path.basename(app["filename"])}]({app["downloadURL"]})'
+                    'value': f'[{app["filename"]}]({app["downloadURL"]})'
                 }
 
             ]
