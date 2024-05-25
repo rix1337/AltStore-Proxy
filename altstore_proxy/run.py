@@ -46,20 +46,22 @@ def download_and_cache_ipa(url):
     if "tinyurl.com" in url:
         url = response.url
 
-    filename = os.path.join(shared_state.values["cache"], os.path.basename(url))
+    file_path = os.path.join(shared_state.values["cache"], os.path.basename(url))
+    file_name = os.path.basename(file_path)
 
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
+
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     # Check if file already exists and compare sizes
-    if os.path.exists(filename):
-        existing_file_size = os.path.getsize(filename)
+    if os.path.exists(file_path):
+        existing_file_size = os.path.getsize(file_path)
         if existing_file_size == total_size_in_bytes:
-            print(f"File {filename} already exists with the same size. Skipping download.")
-            return filename, True
+            print(f"File {file_path} already exists with the same size. Skipping download.")
+            return file_name, True
 
-    print(f"Downloading {url} to {filename}")
+    print(f"Downloading {url} to {file_path}")
     progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-    with open(filename, 'wb') as f:
+    with open(file_path, 'wb') as f:
         for data in response.iter_content(chunk_size=1024):
             progress_bar.update(len(data))
             f.write(data)
@@ -67,7 +69,7 @@ def download_and_cache_ipa(url):
     if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
         print("ERROR, something went wrong")
 
-    return filename, False
+    return file_name, False
 
 
 def update_json_proxy(shared_state_dict, shared_state_lock):
@@ -92,7 +94,7 @@ def update_json_proxy(shared_state_dict, shared_state_lock):
                 for app in data['apps']:
                     print("Found " + app['name'] + ", v." + app['version'])
                     app['filename'], skipped = download_and_cache_ipa(app['downloadURL'])
-                    app['downloadURL'] = shared_state.values["baseurl"] + '/' + app['filename']
+                    app['downloadURL'] = shared_state.values["baseurl"] + '/cache/' + app['filename']
 
                     if not skipped:
                         if shared_state.values['discord_webhook']:
