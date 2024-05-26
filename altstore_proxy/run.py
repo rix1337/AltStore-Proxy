@@ -38,17 +38,34 @@ class Server:
         self.server.serve_forever()
 
 
-def download_and_cache_ipa(url):
+def determine_file_name_from_stream(response):
+    content_disposition = response.headers.get('content-disposition')
+    if content_disposition:
+        filename = content_disposition.split("filename=")[1]
+        if filename:
+            return filename
+    return None
+
+
+def download_and_cache_ipa(app):
+    url = app['downloadURL']
+
     response = requests.get(url, stream=True, allow_redirects=True)
     total_size_in_bytes = int(response.headers.get('content-length', 0))
 
-    # Resolve the actual URL if the provided URL is a shortened URL
-    if "tinyurl.com" in url:
+    if response.url != url:
         url = response.url
+        response = requests.get(url, stream=True, allow_redirects=False)
 
-    file_path = os.path.join(shared_state.values["cache"], os.path.basename(url))
-    file_name = os.path.basename(file_path)
+    file_name = determine_file_name_from_stream(response)
+    if not file_name:
+        file_name = os.path.basename(url)
+    if not file_name:
+        file_name = f"{app['name']}_{app['version']}".translate(str.maketrans(" :/", "___"))
+    if not file_name.endswith(".ipa"):
+        file_name += ".ipa"
 
+    file_path = os.path.join(shared_state.values["cache"], file_name)
 
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
@@ -72,7 +89,7 @@ def download_and_cache_ipa(url):
     return file_name, False
 
 
-def update_json_proxy(shared_state_dict, shared_state_lock):
+def cache_repositories(shared_state_dict, shared_state_lock):
     shared_state.set_state(shared_state_dict, shared_state_lock)
 
     try:
@@ -93,7 +110,7 @@ def update_json_proxy(shared_state_dict, shared_state_lock):
                 data = response.json()
                 for app in data['apps']:
                     print("Found " + app['name'] + ", v." + app['version'])
-                    app['filename'], skipped = download_and_cache_ipa(app['downloadURL'])
+                    app['filename'], skipped = download_and_cache_ipa(app)
                     app['downloadURL'] = shared_state.values["baseurl"] + '/cache/' + app['filename']
 
                     if not skipped:
@@ -252,7 +269,7 @@ def main():
                 print("[AntiGateHandler] status - Error: " + str(e))
             return abort(503, "Cache not initialized. Please try again later.")
 
-        hourly_update = multiprocessing.Process(target=update_json_proxy, args=(shared_state_dict, shared_state_lock,))
+        hourly_update = multiprocessing.Process(target=cache_repositories, args=(shared_state_dict, shared_state_lock,))
         hourly_update.start()
 
         print(
