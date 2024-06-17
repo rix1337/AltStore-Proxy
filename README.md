@@ -7,8 +7,8 @@ A simple proxy for slow AltStore servers
 
 # Features
 
-- Meant for use as custom Repo with AltStore Beta
-- Useful for manual sideloading / automatic update notifications with AltStore
+- Meant for use as custom Repo with AltStore Beta to facilitate faster downloading of apps
+- Useful for manual app sideloading with AltStore (non-Beta), if used with Discord Webhook for update notifications
 
 # Setup
 

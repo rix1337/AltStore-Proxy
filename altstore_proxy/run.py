@@ -38,31 +38,47 @@ class Server:
         self.server.serve_forever()
 
 
-def download_and_cache_ipa(url):
+def determine_file_name_from_stream(response):
+    content_disposition = response.headers.get('content-disposition')
+    if content_disposition:
+        filename = content_disposition.split("filename=")[1]
+        if filename:
+            return filename
+    return None
+
+
+def download_and_cache_ipa(app):
+    url = app['downloadURL']
+
     response = requests.get(url, stream=True, allow_redirects=True)
     total_size_in_bytes = int(response.headers.get('content-length', 0))
 
-    # Resolve the actual URL if the provided URL is a shortened URL
-    if "tinyurl.com" in url:
+    if response.url != url:
         url = response.url
+        response = requests.get(url, stream=True, allow_redirects=False)
 
-    filename = os.path.join(shared_state.values["cache"], os.path.basename(url))
+    file_name = determine_file_name_from_stream(response)
+    if not file_name:
+        file_name = os.path.basename(url)
+    if not file_name:
+        file_name = f"{app['name']}_{app['version']}".translate(str.maketrans(" :/", "___"))
+    if not file_name.endswith(".ipa"):
+        file_name += ".ipa"
 
-    if filename.startswith("/"):
-        filename = filename[1:]
+    file_path = os.path.join(shared_state.values["cache"], file_name)
 
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     # Check if file already exists and compare sizes
-    if os.path.exists(filename):
-        existing_file_size = os.path.getsize(filename)
+    if os.path.exists(file_path):
+        existing_file_size = os.path.getsize(file_path)
         if existing_file_size == total_size_in_bytes:
-            print(f"File {filename} already exists with the same size. Skipping download.")
-            return filename, True
+            print(f"File {file_path} already exists with the same size. Skipping download.")
+            return file_name, True
 
-    print(f"Downloading {url} to {filename}")
+    print(f"Downloading {url} to {file_path}")
     progress_bar = tqdm(total=total_size_in_bytes, unit='iB', unit_scale=True)
-    with open(filename, 'wb') as f:
+    with open(file_path, 'wb') as f:
         for data in response.iter_content(chunk_size=1024):
             progress_bar.update(len(data))
             f.write(data)
@@ -70,10 +86,10 @@ def download_and_cache_ipa(url):
     if total_size_in_bytes != 0 and progress_bar.n != total_size_in_bytes:
         print("ERROR, something went wrong")
 
-    return filename, False
+    return file_name, False
 
 
-def update_json_proxy(shared_state_dict, shared_state_lock):
+def cache_repositories(shared_state_dict, shared_state_lock):
     shared_state.set_state(shared_state_dict, shared_state_lock)
 
     try:
@@ -94,8 +110,8 @@ def update_json_proxy(shared_state_dict, shared_state_lock):
                 data = response.json()
                 for app in data['apps']:
                     print("Found " + app['name'] + ", v." + app['version'])
-                    app['filename'], skipped = download_and_cache_ipa(app['downloadURL'])
-                    app['downloadURL'] = shared_state.values["baseurl"] + '/' + app['filename']
+                    app['filename'], skipped = download_and_cache_ipa(app)
+                    app['downloadURL'] = shared_state.values["baseurl"] + '/cache/' + app['filename']
 
                     if not skipped:
                         if shared_state.values['discord_webhook']:
@@ -253,7 +269,7 @@ def main():
                 print("[AntiGateHandler] status - Error: " + str(e))
             return abort(503, "Cache not initialized. Please try again later.")
 
-        hourly_update = multiprocessing.Process(target=update_json_proxy, args=(shared_state_dict, shared_state_lock,))
+        hourly_update = multiprocessing.Process(target=cache_repositories, args=(shared_state_dict, shared_state_lock,))
         hourly_update.start()
 
         print(
