@@ -1,4 +1,4 @@
-ROM alpine:latest
+FROM alpine:latest
 
 # Define package name
 ARG PACKAGE_NAME=altstore-proxy
