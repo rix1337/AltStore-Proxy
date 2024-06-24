@@ -1,5 +1,4 @@
-FROM alpine:latest
-MAINTAINER rix1337
+ROM alpine:latest
 
 # Define package name
 ARG PACKAGE_NAME=altstore-proxy
@@ -12,7 +11,8 @@ ARG VS="false"
 RUN echo "VS: ${VS}"
 
 # setup
-RUN pip3 install --upgrade pip \
+RUN mkdir -p ~/.config/pip && echo -e "[global]\nbreak-system-packages = true" > ~/.config/pip/pip.conf \
+  && pip3 install --upgrade pip \
   && pip3 install wheel
 
 # Install specified package version and clean up unneeded packages
