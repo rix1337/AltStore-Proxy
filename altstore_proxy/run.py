@@ -107,17 +107,18 @@ def cache_repositories(shared_state_dict, shared_state_lock):
 
             for repo in shared_state.values["repos_to_cache"]:
                 response = requests.get(repo)
-                data = response.json()
-                for app in data['apps']:
-                    print("Found " + app['name'] + ", v." + app['version'])
-                    app['filename'], skipped = download_and_cache_ipa(app)
-                    app['downloadURL'] = shared_state.values["baseurl"] + '/cache/' + app['filename']
+                if response.status_code == 200:
+                    data = response.json()
+                    for app in data['apps']:
+                        print("Found " + app['name'] + ", v." + app['version'])
+                        app['filename'], skipped = download_and_cache_ipa(app)
+                        app['downloadURL'] = shared_state.values["baseurl"] + '/cache/' + app['filename']
 
-                    if not skipped:
-                        if shared_state.values['discord_webhook']:
-                            notifications.discord_webhook(shared_state, app)
+                        if not skipped:
+                            if shared_state.values['discord_webhook']:
+                                notifications.discord_webhook(shared_state, app)
 
-                merged_json['apps'].extend(data['apps'])
+                    merged_json['apps'].extend(data['apps'])
 
             shared_state.update("merged_json", merged_json)
 
@@ -185,7 +186,8 @@ def main():
             print("[AltStore-Proxy] Using custom repositories: " + str(shared_state.values["repos_to_cache"]))
         else:
             shared_state.update("repos_to_cache", [
-                "https://raw.githubusercontent.com/arichornlover/arichornlover.github.io/main/apps.json",
+                "https://raw.githubusercontent.com/arichornloverALT/arichornloverALT.github.io/main/apps.json",
+                # "https://raw.githubusercontent.com/arichornlover/arichornlover.github.io/main/apps.json",
                 "https://raw.githubusercontent.com/lo-cafe/winston-altstore/main/apps.json"
             ])
             print("[AltStore-Proxy] No repositories provided, using default repositories: " + str(
